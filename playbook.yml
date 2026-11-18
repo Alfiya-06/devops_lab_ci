@@ -1,0 +1,31 @@
+---
+- name: Install Nmap and scan targets using variables
+  hosts: scanners
+  become: yes
+
+  vars:
+    targets_src: targets.txt
+    targets_dest: /tmp/targets.txt
+    nmap_flags: "-F"
+
+  tasks:
+    - name: 1. Install Nmap scanner
+      apt:
+        name: nmap
+        state: present
+        update_cache: yes
+
+    - name: 2. Copy targets list to remote host
+      copy:
+        src: "{{ targets_src }}"
+        dest: "{{ targets_dest }}"
+        mode: '0644'
+
+    - name: 3. Run Nmap scan against target list
+      command: "nmap {{ nmap_flags }} -iL {{ targets_dest }}"
+      register: nmap_result
+      changed_when: false
+
+    - name: 4. Print scan results (stdout)
+      debug:
+        var: nmap_result.stdout_lines
